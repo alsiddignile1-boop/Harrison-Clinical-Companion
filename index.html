@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#102c46">
+<title>Harrison Clinical Companion</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f5f8;
+    color: #243447;
+}
+
+header {
+    background: #102c46;
+    color: white;
+    padding: 28px 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 23px;
+    margin: 0 0 8px;
+}
+
+header p {
+    margin: 0;
+    color: #c8d9e8;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+    padding: 20px;
+}
+
+.search {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ccd5df;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 22px;
+}
+
+h2 {
+    color: #102c46;
+    font-size: 19px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.card {
+    background: white;
+    padding: 20px 12px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px #0000000d;
+    cursor: pointer;
+    border: 1px solid #e5eaf0;
+}
+
+.card:active {
+    background: #eaf2f8;
+}
+
+.icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.card h3 {
+    font-size: 15px;
+    margin: 5px 0;
+}
+
+.card p {
+    font-size: 12px;
+    color: #718096;
+}
+
+.section {
+    background: white;
+    margin-top: 22px;
+    padding: 18px;
+    border-radius: 12px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #718096;
+    font-size: 12px;
+}
+
+@media (max-width: 400px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>HARRISON CLINICAL COMPANION</h1>
+    <p>Advanced Internal Medicine Reference</p>
+</header>
+
+<main class="container">
+
+    <input
+        class="search"
+        type="search"
+        id="search"
+        placeholder="Search medical topics..."
+        oninput="searchTopics()"
+    >
+
+    <h2>Medical Library</h2>
+
+    <div class="grid" id="library">
+
+        <div class="card" onclick="openSection('book')">
+            <div class="icon">📚</div>
+            <h3>Harrison Library</h3>
+            <p>19th Edition - Volumes 1 & 2</p>
+        </div>
+
+        <div class="card" onclick="openSection('diseases')">
+            <div class="icon">🩺</div>
+            <h3>Diseases</h3>
+            <p>Medical conditions</p>
+        </div>
+
+        <div class="card" onclick="openSection('diagnosis')">
+            <div class="icon">🔬</div>
+            <h3>Diagnosis</h3>
+            <p>Clinical diagnosis</p>
+        </div>
+
+        <div class="card" onclick="openSection('treatment')">
+            <div class="icon">💊</div>
+            <h3>Treatment</h3>
+            <p>Therapeutic reference</p>
+        </div>
+
+        <div class="card" onclick="openSection('calculators')">
+            <div class="icon">🧮</div>
+            <h3>Medical Calculators</h3>
+            <p>Clinical calculations</p>
+        </div>
+
+        <div class="card" onclick="openSection('guidelines')">
+            <div class="icon">📋</div>
+            <h3>Clinical Guidelines</h3>
+            <p>Medical recommendations</p>
+        </div>
+
+    </div>
+
+    <div class="section" id="content">
+        <h2>Welcome</h2>
+        <p>
+            Your comprehensive internal medicine
+            reference platform.
+        </p>
+        <p>
+            Select a section to get started.
+        </p>
+    </div>
+
+</main>
+
+<footer>
+    HARRISON CLINICAL COMPANION<br>
+    Medical Reference Platform
+</footer>
+
+<script>
+function openSection(section) {
+    const titles = {
+        book: "Harrison Library",
+        diseases: "Diseases",
+        diagnosis: "Diagnosis",
+        treatment: "Treatment",
+        calculators: "Medical Calculators",
+        guidelines: "Clinical Guidelines"
+    };
+
+    document.getElementById("content").innerHTML =
+        "<h2>" + titles[section] + "</h2>" +
+        "<p>This section is under development.</p>";
+}
+
+function searchTopics() {
+    const query = document.getElementById("search")
+        .value.toLowerCase();
+
+    const cards = document.querySelectorAll(".card");
+
+    cards.forEach(card => {
+        card.style.display =
+            card.innerText.toLowerCase().includes(query)
+            ? ""
+            : "none";
+    });
+}
+</script>
+
+</body>
+</html>
