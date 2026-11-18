@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#102c46">
 
-<title>Harrison PDF Reader</title>
+<title>Harrison Clinical Companion - PDF Reader</title>
 
 <style>
 * {
@@ -81,17 +81,19 @@ input[type="number"] {
 }
 
 canvas {
-    max-width: 100%;
+    display: block;
+    max-width: none;
     height: auto;
     background: white;
     box-shadow: 0 2px 8px #0002;
+    margin: auto;
 }
-
 
 #status {
     color: #526477;
     margin: 12px 0;
     font-size: 14px;
+    overflow-wrap: anywhere;
 }
 
 .back {
@@ -106,47 +108,58 @@ canvas {
 <body>
 
 <header>
-<h2>HARRISON PDF READER</h2>
-<p>Clinical Companion Library</p>
+    <h2>HARRISON PDF READER</h2>
+    <p>Clinical Companion Library</p>
 </header>
 
 <div class="container">
 
-<label class="upload" for="pdfFile">
-Choose PDF Book
-</label>
+    <label class="upload" for="pdfFile">
+        Choose PDF Book
+    </label>
 
-<input type="file" id="pdfFile" accept="application/pdf">
+    <input
+        type="file"
+        id="pdfFile"
+        accept=".pdf,application/pdf"
+    >
 
-<div id="status">
-No book selected.
-</div>
+    <div id="status">
+        No book selected.
+    </div>
 
-<div class="controls">
+    <div class="controls">
 
-<button onclick="previousPage()">Previous</button>
+        <button onclick="previousPage()">Previous</button>
 
-<span>Page</span>
+        <span>Page</span>
 
-<input type="number" id="pageNum" value="1" min="1">
+        <input
+            type="number"
+            id="pageNum"
+            value="1"
+            min="1"
+        >
 
-<span id="totalPages">/ 0</span>
+        <span id="totalPages">/ 0</span>
 
-<button onclick="goToPage()">Go</button>
+        <button onclick="goToPage()">Go</button>
 
-<button onclick="nextPage()">Next</button>
+        <button onclick="nextPage()">Next</button>
 
-<button onclick="zoomOut()">−</button>
+        <button onclick="zoomOut()">−</button>
 
-<button onclick="zoomIn()">+</button>
+        <button onclick="zoomIn()">+</button>
 
-</div>
+    </div>
 
-<div id="viewer">
-Select a PDF book to start reading.
-</div>
+    <div id="viewer">
+        Select a PDF book to start reading.
+    </div>
 
-<a class="back" href="index.html">← Back to Home</a>
+    <a class="back" href="index.html">
+        ← Back to Home
+    </a>
 
 </div>
 
@@ -154,171 +167,234 @@ Select a PDF book to start reading.
 
 <script>
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-let pdfDoc = null;
-let currentPage = 1;
-let scale = 1.3;
-
-const fileInput = document.getElementById("pdfFile");
-
-fileInput.addEventListener("change", function(event) {
-
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    if (file.type !== "application/pdf") {
-        alert("Please select a PDF file.");
-        return;
-    }
+if (typeof pdfjsLib === "undefined") {
 
     document.getElementById("status").textContent =
-        "Loading book...";
+        "PDF reader library could not load. Check your internet connection.";
 
-    const reader = new FileReader();
+} else {
 
-    reader.onload = function() {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-        const data = new Uint8Array(reader.result);
+    let pdfDoc = null;
+    let currentPage = 1;
+    let scale = 1.3;
 
-        pdfjsLib.getDocument({
-            data: data
-        }).promise.then(function(pdf) {
+    const fileInput = document.getElementById("pdfFile");
 
-            pdfDoc = pdf;
-            currentPage = 1;
+    fileInput.addEventListener("change", function(event) {
 
-            document.getElementById("totalPages").textContent =
-                "/ " + pdf.numPages;
+        const file = event.target.files[0];
 
-            document.getElementById("pageNum").max =
-                pdf.numPages;
+        if (!file) return;
+
+        if (
+            file.type !== "application/pdf" &&
+            !file.name.toLowerCase().endsWith(".pdf")
+        ) {
+            alert("Please select a PDF file.");
+            return;
+        }
+
+        document.getElementById("status").textContent =
+            "Loading book...";
+
+        document.getElementById("viewer").textContent =
+            "Please wait while the book loads...";
+
+        pdfDoc = null;
+
+        const reader = new FileReader();
+
+        reader.onerror = function() {
 
             document.getElementById("status").textContent =
-                file.name;
+                "Error reading the selected file.";
 
-            renderPage(currentPage);
+            alert("Could not read this file.");
+
+        };
+
+        reader.onload = function() {
+
+            const data = new Uint8Array(reader.result);
+
+            pdfjsLib.getDocument({
+                data: data
+            }).promise.then(function(pdf) {
+
+                pdfDoc = pdf;
+                currentPage = 1;
+
+                document.getElementById("totalPages").textContent =
+                    "/ " + pdf.numPages;
+
+                document.getElementById("pageNum").max =
+                    pdf.numPages;
+
+                document.getElementById("status").textContent =
+                    file.name;
+
+                renderPage(currentPage);
+
+            }).catch(function(error) {
+
+                console.error(error);
+
+                document.getElementById("status").textContent =
+                    "Unable to open this PDF.";
+
+                document.getElementById("viewer").textContent =
+                    "The PDF could not be opened.";
+
+                alert("Unable to open this PDF. Please try another file.");
+
+            });
+
+        };
+
+        reader.readAsArrayBuffer(file);
+
+    });
+
+    function renderPage(number) {
+
+        if (!pdfDoc) return;
+
+        pdfDoc.getPage(number).then(function(page) {
+
+            const viewport = page.getViewport({
+                scale: scale
+            });
+
+            const pixelRatio = Math.min(
+                window.devicePixelRatio || 1,
+                3
+            );
+
+            const canvas = document.createElement("canvas");
+
+            const context = canvas.getContext("2d");
+
+            canvas.width = Math.floor(
+                viewport.width * pixelRatio
+            );
+
+            canvas.height = Math.floor(
+                viewport.height * pixelRatio
+            );
+
+            canvas.style.width = viewport.width + "px";
+            canvas.style.height = viewport.height + "px";
+
+            const viewer = document.getElementById("viewer");
+
+            viewer.innerHTML = "";
+            viewer.appendChild(canvas);
+
+            const renderTask = page.render({
+
+                canvasContext: context,
+
+                viewport: viewport,
+
+                transform: [
+                    pixelRatio, 0,
+                    0, pixelRatio,
+                    0, 0
+                ]
+
+            });
+
+            renderTask.promise.then(function() {
+
+                document.getElementById("pageNum").value =
+                    number;
+
+            }).catch(function(error) {
+
+                console.error(error);
+
+                document.getElementById("status").textContent =
+                    "Error displaying this page.";
+
+            });
 
         }).catch(function(error) {
 
             console.error(error);
 
             document.getElementById("status").textContent =
-                "Unable to open this PDF.";
+                "Unable to load this page.";
 
         });
 
-    };
+    }
 
-    reader.readAsArrayBuffer(file);
+    function previousPage() {
 
-});
+        if (pdfDoc && currentPage > 1) {
 
-function renderPage(number) {
+            currentPage--;
 
-    if (!pdfDoc) return;
+            renderPage(currentPage);
 
-    pdfDoc.getPage(number).then(function(page) {
+        }
 
-        const viewport = page.getViewport({
-            scale: scale
-        });
+    }
 
-        const pixelRatio = Math.min(
-            window.devicePixelRatio || 1,
-            3
+    function nextPage() {
+
+        if (pdfDoc && currentPage < pdfDoc.numPages) {
+
+            currentPage++;
+
+            renderPage(currentPage);
+
+        }
+
+    }
+
+    function goToPage() {
+
+        if (!pdfDoc) return;
+
+        const number = Number(
+            document.getElementById("pageNum").value
         );
 
-        const canvas = document.createElement("canvas");
+        if (
+            Number.isInteger(number) &&
+            number >= 1 &&
+            number <= pdfDoc.numPages
+        ) {
 
-        const context = canvas.getContext("2d");
+            currentPage = number;
 
-        canvas.width = Math.floor(
-            viewport.width * pixelRatio
-        );
+            renderPage(currentPage);
 
-        canvas.height = Math.floor(
-            viewport.height * pixelRatio
-        );
+        }
 
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        document.getElementById("viewer").innerHTML = "";
-
-        document.getElementById("viewer").appendChild(canvas);
-
-        page.render({
-            canvasContext: context,
-            viewport: viewport,
-            transform: [
-                pixelRatio, 0,
-                0, pixelRatio,
-                0, 0
-            ]
-        });
-
-        document.getElementById("pageNum").value = number;
-
-    });
     }
 
-    });
+    function zoomIn() {
 
-}
+        if (!pdfDoc) return;
 
-function previousPage() {
+        scale = Math.min(scale + 0.3, 3.5);
 
-    if (pdfDoc && currentPage > 1) {
-        currentPage--;
         renderPage(currentPage);
+
     }
 
-}
+    function zoomOut() {
 
-function nextPage() {
+        if (!pdfDoc) return;
 
-    if (pdfDoc && currentPage < pdfDoc.numPages) {
-        currentPage++;
+        scale = Math.max(scale - 0.3, 0.7);
+
         renderPage(currentPage);
-    }
-
-}
-
-function goToPage() {
-
-    if (!pdfDoc) return;
-
-    const number = Number(
-        document.getElementById("pageNum").value
-    );
-
-    if (number >= 1 && number <= pdfDoc.numPages) {
-        currentPage = number;
-        renderPage(currentPage);
-    }
-
-}
-
-function zoomIn() {
-
-    if (!pdfDoc) return;
-
-    scale = Math.min(scale + 0.3, 3.5);
-
-    renderPage(currentPage);
-
-}
-
-function zoomOut() {
-
-    if (!pdfDoc) return;
-
-    scale = Math.max(scale - 0.3, 0.7);
-
-    renderPage(currentPage);
 
     }
 
